@@ -1,181 +1,185 @@
-Business Task 02 – Cash Flow Analysis
+# Business Task 02 – Cash Flow Analysis
 
-Business Objective
+## Business Objective
 
-Analyze bank transaction data to evaluate cash flow trends across currencies, months, and legal entities.
+Analyze bank transaction data to evaluate cash flow trends
+across currencies, months, and legal entities.
 
-The objective is to identify significant cash flow changes, compare financial activity across entities, and support treasury management in monitoring cash movements.
+The goal is to identify significant cash flow changes,
+compare financial activity across entities, and support
+treasury management in monitoring cash movements.
 
-Dataset Overview
+## Dataset Overview
 
-Company: Global Manufacturing Group (fictional)
+- **Company:** Global Manufacturing Group (fictional)
+- **Dataset:** Synthetic bank transactions
+- **Total transactions:** 60,000
+- **Period:** January 2024 – September 2026
+- **Legal entities:** 4
+- **Currencies:** CZK, EUR, PLN, USD
+- **Tools:** PostgreSQL, DBeaver
 
-Dataset: Synthetic bank transactions
+---
 
-Total transactions: 60,000
+## Analysis Overview
 
-Period: January 2024 – September 2026
+### 02.A – Monthly Net Cash Flow
 
-Legal entities: 4
+**Business Question:**
+How does monthly net cash flow develop across different currencies?
 
-Currencies: CZK, EUR, PLN, USD
+Monthly net cash flow was calculated using `SUM(amount)`,
+grouped by year, month, and currency.
 
-Tools: PostgreSQL, DBeaver
+This analysis provides an overview of historical cash flows
+and identifies periods with significant net outflows.
 
-Source tables: bank_transactions, bank_accounts, entities
+### 02.B – Monthly Incoming & Outgoing Cash Flow
 
-Analysis Overview
+**Business Question:**
+How much cash flows in and out each month?
 
-02.A – Monthly Net Cash Flow
+Conditional aggregation using `SUM() FILTER (WHERE ...)`
+was applied to calculate:
 
-Business Question: How does monthly net cash flow develop across different currencies?
+- **Incoming Cash Flow:** Positive transactions
+- **Outgoing Cash Flow:** Negative transactions
+- **Net Cash Flow:** Sum of incoming and outgoing amounts
 
-Monthly net cash flow was calculated using SUM(amount), with transactions grouped by year, month, and currency.
+This approach helps identify whether monthly cash flow
+changes are driven by incoming or outgoing payments.
 
-This analysis provides a historical overview of monthly cash movements and allows the identification of periods with unusually high net outflows.
+### 02.C – Monthly Cash Flow Trends & TOP 3 Declines
 
-02.B – Monthly Incoming & Outgoing Cash Flow
+**Business Question:**
+Which months recorded the largest month-over-month
+declines in net cash flow?
 
-Business Question: How much cash flows in and out each month?
+The analysis used SQL window functions and CTEs to:
 
-Conditional aggregation using SUM() FILTER (WHERE ...) was applied to calculate:
+1. Calculate monthly net cash flow.
+2. Retrieve previous monthly values using `LAG()`.
+3. Calculate month-over-month changes.
+4. Rank changes by currency using `ROW_NUMBER()`.
+5. Identify the three largest negative changes per currency.
 
-Incoming cash flow – positive transactions
+**Key Findings – Largest Monthly Declines**
 
-Outgoing cash flow – negative transactions
+| Currency | Month | Monthly Change |
+|----------|-------|---------------:|
+| CZK | January 2026 | -3,905,223.12 |
+| EUR | June 2026 | -3,959,700.91 |
+| PLN | November 2024 | -1,946,475.53 |
+| USD | September 2025 | -2,772,422.37 |
 
-Net cash flow – total sum of incoming and outgoing transactions
+Amounts are expressed in their original currencies
+and must not be directly compared without FX conversion.
 
-This approach helps distinguish between changes driven by lower customer receipts and those caused by higher payments.
+### 02.D – Cash Flow by Legal Entity
 
-02.C – Monthly Cash Flow Trends & TOP 3 Declines
+**Business Question:**
+Which legal entities generate the highest incoming
+and outgoing cash flows?
 
-Business Question: Which months experienced the largest month-over-month deterioration in net cash flow?
+Three relational tables were connected using `JOIN`:
 
-Common Table Expressions (CTEs) and SQL window functions were used to:
+- `bank_transactions`
+- `bank_accounts`
+- `entities`
 
-Aggregate monthly net cash flow.
+The analysis calculated:
 
-Calculate month-over-month changes using LAG().
+- Transaction count
+- Incoming cash flow
+- Outgoing cash flow
+- Net cash flow
 
-Rank monthly changes separately for each currency using ROW_NUMBER().
+Results were grouped by legal entity and transaction currency.
 
-Identify the three largest negative changes for each currency.
+**Key Finding:**
 
-Key Findings – Largest Monthly Declines
+All four legal entities recorded negative net cash flow
+in their analyzed currencies over the reporting period.
 
-Currency
+Negative cash flow does not necessarily indicate
+a liquidity shortage.
 
-Month
+---
 
-Monthly Change
+## Data Integrity Validation
 
-CZK
+An additional SQL check was performed to validate
+the joins between bank transactions, bank accounts,
+and legal entities.
 
-January 2026
+- **Original transactions:** 60,000
+- **Transactions after JOIN:** 60,000
+- **Difference:** 0
 
--3,905,223.12
+The applied joins preserved the expected transaction count.
 
-EUR
+---
 
-June 2026
+## SQL Techniques Applied
 
--3,959,700.91
+- `JOIN` – Combining relational tables
+- `GROUP BY` – Grouping transactions
+- `SUM()` and `COUNT()` – Aggregations
+- `FILTER (WHERE ...)` – Conditional aggregations
+- `EXTRACT()` – Extracting year and month
+- `DATE_TRUNC()` – Monthly date aggregation
+- `WITH` – Common Table Expressions
+- `LAG()` – Previous period comparisons
+- `ROW_NUMBER()` – Ranking monthly changes
+- `PARTITION BY` – Separate calculations by currency
 
-PLN
+---
 
-November 2024
+## Business Recommendations
 
--1,946,475.53
+1. **Investigate significant cash flow declines.**
+   Analyze transaction categories and payment timing
+   to identify potential drivers of large outflows.
 
-USD
+2. **Monitor liquidity alongside cash flow.**
+   Include opening balances and available financing
+   before evaluating liquidity risks.
 
-September 2025
+3. **Improve cash flow visibility.**
+   Develop regular reporting of monthly inflows,
+   outflows, and net cash flow.
 
--2,772,422.37
+4. **Implement currency conversion.**
+   Convert transactions into a common reporting currency
+   before consolidated comparisons.
 
-These figures represent the largest month-over-month declines within each currency, not consolidated cash flow amounts.
+5. **Review intercompany transactions.**
+   Evaluate the impact of internal transfers
+   on consolidated financial reporting.
 
-02.D – Cash Flow by Legal Entity
+---
 
-Business Question: Which legal entities generate the highest cash inflows, outflows, and negative net cash flow?
+## Limitations
 
-Three database tables were joined to associate bank transactions with their respective legal entities.
+- The dataset is synthetic.
+- Transaction amounts are reported in original currencies.
+- Opening balances are not included in this analysis.
+- Cash flows are not yet classified into operating,
+  investing, and financing activities.
+- Missing calendar months may require additional handling
+  when calculating month-over-month changes.
 
-bank_transactions – transaction-level information
+---
 
-bank_accounts – bank account ownership
+## Conclusion
 
-entities – legal entity details
+Business Task 02 provides a structured analysis of
+cash flow movements across months, currencies,
+and legal entities.
 
-The analysis calculated transaction counts, incoming cash flow, outgoing cash flow, and net cash flow for each entity and currency.
+The SQL analysis demonstrates how transaction-level
+data can be transformed into meaningful treasury
+reporting information.
 
-Key Finding:
-
-All four entities recorded negative net cash flow in their analyzed transaction currencies over the reporting period.
-
-However, negative cash flow does not necessarily indicate insufficient liquidity.
-
-Data Integrity Validation
-
-An additional SQL check was performed to verify whether joining the three tables caused transaction loss or duplication.
-
-Original transaction count: 60,000
-
-Transaction count after JOINs: 60,000
-
-Difference: 0
-
-The result confirms that the applied joins preserved the expected transaction count.
-
-SQL Techniques Applied
-
-JOIN – combining related database tables
-
-GROUP BY – aggregating transaction data
-
-SUM() and COUNT() – financial and volume calculations
-
-FILTER (WHERE ...) – conditional aggregation
-
-EXTRACT() and DATE_TRUNC() – date transformations
-
-WITH – Common Table Expressions
-
-LAG() – retrieving previous period values
-
-ROW_NUMBER() – ranking monthly changes
-
-PARTITION BY – performing separate calculations by currency
-
-Business Recommendations
-
-Investigate significant cash flow declines. Review transaction categories and payment timing to identify potential drivers of unusually high net outflows.
-
-Monitor liquidity alongside cash flow. Incorporate opening balances and available financing before drawing conclusions about financial liquidity.
-
-Improve cash flow visibility. Develop regular reporting of monthly incoming, outgoing, and net cash flow.
-
-Implement currency conversion. Convert transaction values into a common reporting currency before consolidated comparisons.
-
-Review intercompany transactions. Consider internal transfers and their potential impact on consolidated reporting.
-
-Limitations
-
-The dataset is synthetic and does not represent real corporate financial performance.
-
-Cash flow results are reported in original transaction currencies.
-
-Historical bank balances and available credit facilities were not included in this analysis.
-
-The analysis does not yet distinguish all operating, investing, and financing cash flows.
-
-Monthly decline calculations compare consecutive available monthly records; missing calendar periods would require additional handling.
-
-Conclusion
-
-The analysis provides a structured overview of cash flow activity across currencies, reporting periods, and legal entities.
-
-The results demonstrate how SQL can be used to transform transaction-level data into actionable financial information.
-
-The next phase of the project will focus on Liquidity & Bank Balance Analysis, incorporating opening balances to evaluate historical cash positions and liquidity development.
+**Next Step:**
+Business Task 03 – Liquidity & Bank Balance Analysis.
